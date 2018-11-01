@@ -35,6 +35,7 @@ namespace HDS_UDP
 					_time_out_count++;
 					if(++ writer->_try_time == HDS_UDP_CONNECTION_SEND_TRY_TIME)
 					{
+						/*sendå¤±è´¥è¶…è¿‡æ¬¡æ•°äº†ï¼Œå…³é—­è¿žæŽ¥*/
 						//need to close this conneciton
 						writer->_trans_result_code = TRANS_TIME_OUT;
 						if(set_connection_trans_suspend(writer)==0)
@@ -44,6 +45,7 @@ namespace HDS_UDP
 						}
 						return;
 					}
+					/*RTOåŠ å€*/
 					set_connection_RTO_Double(writer);
 					writer->add_to_sender_queue();
 				}
@@ -180,7 +182,7 @@ namespace HDS_UDP
 			{
 				if(reader->_running_count.value() == running_count)
 				{
-					//¿ÉÒÔÉ¾³ý´ËÁ¬½ÓÁË
+					//ï¿½ï¿½ï¿½ï¿½É¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					reader->_trans_result_code = TRANS_TIME_OUT;
 					if(set_connection_trans_suspend(reader)==0)
 					{
@@ -250,7 +252,7 @@ namespace HDS_UDP
 				}
 			}
 		}
-		//·¢ËÍÈ·ÈÏ
+		//ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½
 		HDS_WriteCDR cdr(rdata->data);
 		CONNECTION_FILL_HEADER(
 			HDS_UDP_TRANS_SIMPLE_FILE_ACK,

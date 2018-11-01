@@ -9,7 +9,7 @@
 
 namespace HDS_UDP
 {
-	static atomic_t<unsigned long> _time_out_count=0;
+	static atomic_t<unsigned long> _time_out_count=0; /*åŽŸå­æ“ä½œå“¦*/
 	unsigned long HDS_UDP_Complex_Connection_Writer::get_time_out_count()
 	{
 		return _time_out_count.value();
@@ -67,7 +67,7 @@ namespace HDS_UDP
 
 					set_connection_RTO_Double(writer);
 					
-					//µ÷Õû´°¿ÚºÍ·§Öµ
+					//è°ƒæ•´çª—å£å’Œé˜€å€¼
 					if(lock_connection_status_ack_mutex(writer)==0)
 					{
 						_writer_congestion(writer);
@@ -195,7 +195,7 @@ namespace HDS_UDP
 
 		if(writer->_sack_same_count >=3)
 		{
-			//Õâ¸öÊ±ºò³öÏÖÁËsack¶ªÊ§£¬ÐèÒªÖØÐÂÉèÖÃ
+			//è¿™ä¸ªæ—¶å€™å‡ºçŽ°äº†sackä¸¢å¤±ï¼Œéœ€è¦é‡æ–°è®¾ç½®
 			_writer_congestion(writer);
 			set_connection_status_has_sack(writer);
 			
@@ -209,8 +209,8 @@ namespace HDS_UDP
 		}
 		else
 		{
-			//Õý³£Çé¿ö£¬¿ÉÒÔÖ±½ÓÔö¼Ó´°¿Ú´óÐ¡
-			//ÐèÒªµ÷½Ú´°¿ÚÖµ
+			//æ­£å¸¸æƒ…å†µï¼Œå¯ä»¥ç›´æŽ¥å¢žåŠ çª—å£å¤§å°
+			//éœ€è¦è°ƒèŠ‚çª—å£å€¼
 #ifdef _USE_COMPLEX_FILE_WINDOW_INCREASE_FACTOR_
 			float next_ack_seq_window_increase_factor= writer->_ack_seq_window_increase_factor +=0.05f;
 			if(next_ack_seq_window_increase_factor >= 1.0f)
@@ -242,7 +242,7 @@ namespace HDS_UDP
 					}
 					if(next_window_size < writer->_window_site)
 					{
-						//·ÀÖ¹Òç³ö
+						//é˜²æ­¢æº¢å‡º
 						next_window_size =  writer->_window_site;
 					}
 					writer->_window_ssthresh = next_window_size;
@@ -337,7 +337,7 @@ namespace HDS_UDP
 			{
 				if(reader->_running_count.value() == running_count)
 				{
-					//¿ÉÒÔÉ¾³ý´ËÁ¬½ÓÁË
+					//å¯ä»¥åˆ é™¤æ­¤è¿žæŽ¥äº†
 					reader->_trans_result_code = TRANS_TIME_OUT;
 					if(set_connection_trans_suspend(reader)==0)
 					{

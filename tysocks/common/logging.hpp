@@ -34,6 +34,7 @@ public:
             buffer << "DEBUG ";
         }
     }
+    /*原来是因为有这种一个log啊*/
     template <typename T>
     logger &operator<<(const T &value) {
         buffer << value;

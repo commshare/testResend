@@ -156,16 +156,16 @@ namespace HDS_UDP
 
 		void suspend_connection_ID();
 
-		//����ID
+		//回收ID
 		void release_connection_ID();
 
-		/*����== �������Ƿ����*/
+		/*重载== 看两者是否相等*/
 		inline bool operator==(const Connection_ID &op)const
 		{
 			return this->_CID._ID64 == op._CID._ID64;
 		}
 
-		/*����<*/
+		/*重载<*/
 		inline bool operator < (const Connection_ID & op ) const
 		{
 			return this->_CID._ID64 < op._CID._ID64;
@@ -202,14 +202,14 @@ namespace HDS_UDP
 }
 typedef HDS_UDP::Verification_Recv_Buf_Type HDS_UDP_Verification_Recv_Buf_Type;
 
-//������֤
+//数据认证
 typedef void (CALLBACK *HDS_UDP_Recv_Failed_Func)(HDS_UDP_Result_Process_Data *data,
 										 HDS_UDP_Connection_ID *conID,HDS_UDP_TRANS_RESULT_CODE code);
 typedef struct 
 {
 	HDS_UDP_Verification_Recv_Type _recv_type;
 	HDS_UDP_Verification_Recv_Buf_Type _recv_buf_type;
-	char* _recv_buf;  //�û�����Ľ�������Ϊ0��ʹ��ϵͳ�Զ��建����
+	char* _recv_buf;  //用户定义的接收区，为0则使用系统自定义缓冲区
 	HDS_UDP_Recv_Failed_Func _recv_failed_func;
 }HDS_UDP_Recv_Verification_Attribute;
 
@@ -246,18 +246,18 @@ namespace HDS_UDP
 		void* extend_data;
 	}_timer_parm_;
 
-	//���ǵ���̬���������ģ����Բ�ʹ�ö�̬
+	//考虑到多态的性能消耗，所以不使用多态 TODO 怎么避免的？
 	struct connection
 	{
 		Connection_ID _connection_ID;
 		atomic_t<long> _running_count;
 		HDS_UDP_TRANS_RESULT_CODE _trans_result_code;
 		//*****************************************
-		//status �ĺ��� 
-		//0 bit �����Ƿ�ɹ�
-		//1 bit ��������λ
-		//2 bit ǿ��ֹͣλ
-		//3 bit ����ǽ��ն˻��Ƿ��Ͷ� 
+		//status 的含义 
+		//0 bit 传输是否成功
+		//1 bit 数据清理位
+		//2 bit 强制停止位
+		//3 bit 标记是接收端还是发送端 
 #define _CNT_STATUS_TRANS_SUC_BIT_OFFSET_ 0
 #define _CNT_STATUS_BUF_CLEAN_BIT_OFFSET_  1
 #define _CNT_STATUS_FORCE_STOP 2
@@ -340,7 +340,7 @@ namespace HDS_UDP
 
 		static void filter_data(Kernel_Recv_Data* rdata);
 
-		//���block_length ==0 ���͵���message_node
+		//如果block_length ==0 则发送的是message_node
 		static int start_sender(message_node* node,char * block , unsigned int block_length ,
 			sockaddr* remote_addr,socklen_t remote_addr_length,Connection_ID* conID,
 			HDS_UDP_SENDED_DEL_TYPE del_type,HDS_UDP_Sender_Handler handler,
@@ -434,16 +434,16 @@ enum Ack_Type
 
 	struct Connection_Writer:public connection
 	{
-		//status ��־����˼
-		//3 bit �Ƿ��Ѿ���sender������
-		//4 bit ����Ƿ���Ҫ��connection�����sender����
-		//5 bit ����Ƿ��ڸ���RTO
-		//6 bit �Ƿ��͹�Require��������͹�����Ҫʹ��requrie_duplicate
-		//7 bit ����Ƿ���sack����
-		//8 bit �Ƿ���ڶ�ʱ����ʱ
-		//9 bit ����Ƿ����ڴ���ack����sack��Ϣ���п��ܶ��̵߳���ͬʱ����ack��������ʱ��󵽵�ackֻ�ö���������������͵ļ��ʺܵ͡�
-		//10 bit ��ʶ�Ƿ���Ȼ����sack�׶�,�˽׶��޷������µı���
-		//11 bit ��ʶ�Ƿ��Ѿ��ش��˶�ʧ�İ��������Իָ���ԭ��current_cursor 
+		//status 标志的意思
+		//3 bit 是否已经在sender队列中
+		//4 bit 标记是否需要将connection加入回sender队列
+		//5 bit 标记是否在更新RTO
+		//6 bit 是否发送过Require，如果发送过则需要使用requrie_duplicate
+		//7 bit 标记是否有sack出现
+		//8 bit 是否存在定时器超时
+		//9 bit 标记是否正在处理ack或者sack信息，有可能多线程调用同时进入ack处理，这时候后到的ack只好丢弃。这种情况发送的几率很低。
+		//10 bit 标识是否仍然处于sack阶段,此阶段无法发送新的报文
+		//11 bit 标识是否已经重传了丢失的包，并可以恢复到原来current_cursor 
 #define _CNT_STATUS_IN_SENDER_BIT_OFFSET_ (_CNT_BASE_CONNECTION_END+1)
 #define _CNT_STATUS_REBACK_SENDER_BIT_OFFSET (_CNT_BASE_CONNECTION_END+2)
 #define _CNT_STATUS_REFLESH_RTO_BIT_OFFSET (_CNT_BASE_CONNECTION_END+3)
@@ -501,23 +501,24 @@ enum Ack_Type
 #define	rto_diff(x,y)  x>y?(x-y):(y-x)
 
 /*
-�����㷨
-Ҫ���㵱ǰ��RTO��TCP���ͷ���Ҫά������״̬������SRTT ��ƽ������ʱ�䣩��RTTVAR������ʱ������������⣬���Ǽ���һ��ʱ�Ӽ��G�롣
-����SRTT��RTTVAR��RTO�ķ������£�
-(1) �ڶ�һ���շ�˫��֮����������һ������ɻػ�ʱ�䣨RTT������֮ǰ�����ͷ�Ӧ�ý�RTO����Ϊ3�롣
-ע�⵽��һЩ��ʩ���ܲ���һ�֡�����ʽ����ʱ�������ܹ�����һ������2.5���3��֮���ֵ����ˣ��ڸö�ʱ���������ڶ���2.5���ʱ���ڳ�ʱ������£���Ϊһ���ϵ͵�2.5��Ĳ���Ҳ�ǿ��Խ��ܵģ�ʹ�ü��ΪG������ʽ��ʱ������ʩ����ʱ����ֵ������2.5 + G�롣
-(2) ����ɵ�һ��RTT����Rʱ����������������
-SRTT <�� R
-RTTVAR <��R/2
-RTO <��SRTT + max (G, K*RTTVAR)
-����K = 4��
-(3) �����һ��������RTT����R'ʱ����������������
-RTTVAR <��(1 - beta) * RTTVAR + beta * |SRTT - R'|
-SRTT <�� (1 - alpha) * SRTT + alpha * R'
-��������RTTVAR��SRTT��ֵ�������Ǹ�ʹ�õڶ��η���������SRTT֮ǰ��SRTTֵ����������˵������RTTVAR��SRTT���밴��������˳����м��㡣
-��������Ӧ��ʹ��alpha=1/8��beta=1/4���м��㡣
-�ڼ���֮���������������RTO <�� SRTT + max (G, K*RTTVAR)��
-(4) һ��RTO����ã������С��1���ӣ���RTOӦ�ò��䵽1�롣
+基本算法
+要计算当前的RTO，TCP发送方需要维护两个状态变量，SRTT （平滑环回时间）和RTTVAR（环回时间变量）。另外，我们假设一个时钟间隔G秒。
+计算SRTT、RTTVAR和RTO的法则如下：
+(1) 在对一个收发双方之间所发出的一个段完成回环时间（RTT）测量之前，发送方应该将RTO设置为3秒。
+注意到有一些设施可能采用一种“心跳式”定时器，它能够产生一个介于2.5秒和3秒之间的值。因此，在该定时器绝不会在短于2.5秒的时间内超时的情况下，
+ 作为一个较低的2.5秒的步进也是可以接受的，使用间隔为G的心跳式定时器的设施，定时器的值不低于2.5 + G秒。
+(2) 当完成第一个RTT测量R时，宿主机必须设置
+SRTT <— R
+RTTVAR <—R/2
+RTO <—SRTT + max (G, K*RTTVAR)
+其中K = 4。
+(3) 当完成一个并发的RTT测量R'时，宿主机必须设置
+RTTVAR <—(1 - beta) * RTTVAR + beta * |SRTT - R'|
+SRTT <— (1 - alpha) * SRTT + alpha * R'
+用来更新RTTVAR的SRTT的值，就是那个使用第二次分配来更新SRTT之前的SRTT值本身。就是说，更新RTTVAR和SRTT必须按照上述的顺序进行计算。
+上述计算应该使用alpha=1/8和beta=1/4进行计算。
+在计算之后，宿主机必须更新RTO <— SRTT + max (G, K*RTTVAR)。
+(4) 一旦RTO计算好，如果它小于1秒钟，则RTO应该补充到1秒。
 */
 #define  set_connection_RTO(con,send_time) \
 	do{\
@@ -580,7 +581,7 @@ SRTT <�� (1 - alpha) * SRTT + alpha * R'
 		typedef void (*conneciton_do_send)(connection* con,char* sender_buf);
 		conneciton_do_send      _do_send;
 		HDS_UDP_SENDED_DEL_TYPE  _del_type;
-		//����ĳ��Դ���
+		//传输的尝试次数
 		atomic_t<long> _try_time;
 
 #ifdef _SUPPORT_ACE_
@@ -655,10 +656,10 @@ SRTT <�� (1 - alpha) * SRTT + alpha * R'
 
 	struct Connection_Reader:public connection
 	{
-		//status ��־����˼
-		//2bit��ʾ�Ƿ���recv_wait_ack������
-		//3bit��ʾ�Ƿ��Ѿ��������ճɹ���ʱ��
-		//4bit��ʾ�Ƿ����SACK
+		//status 标志的意思
+		//2bit表示是否在recv_wait_ack队列中
+		//3bit表示是否已经触发接收成功定时器
+		//4bit表示是否出现SACK
 #define _CNT_STATUS_IN_RECV_WAIT_ACK_QUEUE_BIT_OFFSET (_CNT_BASE_CONNECTION_END+1)
 #define _CNT_STATUS_SET_RECV_SUCC_TIMER_BIT_OFFSET (_CNT_BASE_CONNECTION_END+2)
 #define _CNT_STATUS_READER_SACK_BIT_OFFSET (_CNT_BASE_CONNECTION_END+3)
@@ -676,7 +677,7 @@ SRTT <�� (1 - alpha) * SRTT + alpha * R'
 #define test_reader_connection_sack(con) \
 	(con->_status.BitTest(_CNT_STATUS_READER_SACK_BIT_OFFSET)==1)
 
-		//���ջ�����������
+		//接收缓冲区的类型
 		volatile unsigned int _require_duplicate_label;
 		HDS_UDP_Recv_Buf_Type _recv_buf_type;
 		HDS_UDP_Recv_Failed_Func _recv_failed_handle;

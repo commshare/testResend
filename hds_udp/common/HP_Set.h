@@ -6,29 +6,29 @@
 /*
 Author:sjp
 Date:2011.2.22
-��set����linux�ں˺������ʵ���޸Ķ��ɡ�
-���Ǹ��ٶȺܿ��set�����������ɾ�������΢����set��10�����ң�����ɾ������������50�����ٶ�
+此set按照linux内核红黑树的实现修改而成。
+这是个速度很快的set，如果不计算删除，则比微软的set快10倍左右，计算删除操作，则是50倍的速度
 ****************************************
-������ɾ��
+不计算删除
 set<int>
-����1000000�����ݺ󣬶�ȡ1000000�����ݡ�
-HP_setʹ��ʱ�䣺2398ms
-stlport   ʹ��ʱ�䣺20511ms
-�ڴ�ռ�ô�����ͬ
+插入1000000个数据后，读取1000000次数据。
+HP_set使用时间：2398ms
+stlport   使用时间：20511ms
+内存占用大致相同
 ****************************************
 ****************************************
-����ɾ�����Խ����
+加入删除测试结果：
 set<int>
-����1000000�����ݺ󣬶�ȡ1000000�����ݣ�����ȫɾ����
-HP_setʹ��ʱ�䣺2386ms
-stlport   ʹ��ʱ�䣺103402ms
-�ڴ�ռ�ô�����ͬ
+插入1000000个数据后，读取1000000次数据，再完全删除。
+HP_set使用时间：2386ms
+stlport   使用时间：103402ms
+内存占用大致相同
 ****************************************
-�ɴ˿ɼ�hp_setɾ�������������ķ�ʱ�䡣
-ʹ��boost_pool���ܻ�ʹ�ڴ�ռ�ñ�󣬵��ٶ���һ���ġ�
-��set���ڶ��̶߳��ǰ�ȫ��
-������߳�д��Ҫ����ͬ�����ơ�
-HP_set��stl��set����һ�£�������ͬkey�����ݣ������ݲ��ᱻ���ǡ�
+由此可见hp_set删除操作基本不耗费时间。
+使用boost_pool可能会使内存占用变大，但速度是一流的。
+此set对于多线程读是安全的
+如果多线程写需要加入同步机制。
+HP_set与stl的set特性一致，插入相同key的数据，旧数据不会被覆盖。 TODO
 */
 
 #define    RB_TREE_RED        0
@@ -39,13 +39,13 @@ template <typename T1>
 class HP_set
 {
 private:
-	/* �����Լ���entry��first��key��second��value��*/
+	/* 定义自己的entry，first是key，second是value。*/
 	struct my_data{
 		T1 first;
 	};
 
 	struct rb_node {
-		//��rb_node�������Լ�������
+		//在rb_node中添加自己的数据
 		struct my_data key;
 		struct rb_node *rb_parent;
 		int rb_color;
@@ -61,12 +61,12 @@ private:
 	};
 
 
-	/*���ʹ��һ��ȫ�ֵ��ڴ����أ���Ӧ�û���ӵĸ�Ч*/
+	/*如果使用一个全局的内存分配池，则应该会更加的高效*/
 	boost::pool<boost::default_user_allocator_malloc_free> Pool_node;
 
 	rb_root  root;
 
-	/*�����Լ������ݵıȽϺ���*/
+	/*定义自己的数据的比较函数*/
 	static int cmp(struct my_data * left, struct my_data * right){
 		if(left->first == right->first)
 			return 0;

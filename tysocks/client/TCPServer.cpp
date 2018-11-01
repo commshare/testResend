@@ -42,7 +42,7 @@ void TCPServer::io_accept(ev::io &watcher, int revents) {
         incoming_len = sizeof(sockaddr_in6);
         incoming_addr = (sockaddr *)malloc(incoming_len);
     }
-
+    /*accept返回的是一个fd*/
     int client_sd = accept(watcher.fd, incoming_addr, &incoming_len);
 
     string ip = ip2str(incoming_addr);
@@ -60,6 +60,7 @@ void TCPServer::io_accept(ev::io &watcher, int revents) {
 
     TCPHandler *hdl = new TCPHandler(conn_list, tp_client, client_sd, packet_size, client_sd, true);
     while (1) {
+        /*TODO 这是一个什么鬼*/
         if(__sync_bool_compare_and_swap(&conn_list[client_sd], NULL, hdl)){
             break;
         }

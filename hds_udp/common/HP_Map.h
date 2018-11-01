@@ -6,21 +6,21 @@
 /*
 Author:sunning
 Date:2011.2.22
-��map����linux�ں˺������ʵ���޸Ķ��ɡ�
-���Ǹ��ٶȺܿ��map����stlport��map��4�����ң����ʱ�ӽ�6��
+此map按照linux内核红黑树的实现修改而成。
+这是个速度很快的map，比stlport的map快4倍左右，最快时接近6倍
 ****************************************
-���Խ����
+测试结果：
 map<int,int>
-����1000000�����ݺ󣬶�ȡ1000000�����ݣ�����ȫɾ����
-HP_mapʹ��ʱ�䣺3418ms
-stlport   ʹ��ʱ�䣺16555ms
-�ڴ�ռ�ô�����ͬ
-����stlport�ڲ����ڴ�أ�����clear�ڴ治�����ϱ��ͷţ�hp_map������ȫ�ͷŵ������ڴ�ռ���Ͽ�����ĳЩ����HP_map��stlport�����ơ�
+插入1000000个数据后，读取1000000次数据，再完全删除。
+HP_map使用时间：3418ms
+stlport   使用时间：16555ms
+内存占用大致相同
+由于stlport内部有内存池，所以clear内存不会马上被释放，hp_map可以完全释放掉。从内存占用上看，在某些方面HP_map比stlport有优势。
 ****************************************
-ʹ��boost_pool���ܻ�ʹ�ڴ�ռ�ñ�󣬵��ٶ���һ���ġ�
-��map���ڶ��̶߳��ǰ�ȫ��
-������߳�д��Ҫ����ͬ�����ơ�
-HP_map��stl��map����һ�£�������ͬkey�����ݣ������ݲ��ᱻ���ǡ�
+使用boost_pool可能会使内存占用变大，但速度是一流的。
+此map对于多线程读是安全的
+如果多线程写需要加入同步机制。
+HP_map与stl的map特性一致，插入相同key的数据，旧数据不会被覆盖。
 */
 
 #define    RB_TREE_RED        0
@@ -31,14 +31,14 @@ template <typename T1,typename T2>
 class HP_map
 {
 private:
-	/* �����Լ���entry��first��key��second��value��*/
+	/* 定义自己的entry，first是key，second是value。*/
 	struct my_data{
 		T1 first;
 		T2 second;
 	};
 
 	struct rb_node {
-		//��rb_node�������Լ�������
+		//在rb_node中添加自己的数据
 		struct my_data key;
 		struct rb_node *rb_parent;
 		int rb_color;
@@ -54,12 +54,12 @@ private:
 	};
 
 
-	/*���ʹ��һ��ȫ�ֵ��ڴ����أ���Ӧ�û���ӵĸ�Ч*/
+	/*如果使用一个全局的内存分配池，则应该会更加的高效*/
 	boost::pool<boost::default_user_allocator_malloc_free> Pool_node;
 
 	rb_root  root;
 
-	/*�����Լ������ݵıȽϺ���*/
+	/*定义自己的数据的比较函数*/
 	static int cmp(struct my_data * left, struct my_data * right){
 		if(left->first == right->first)
 			return 0;

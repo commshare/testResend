@@ -24,7 +24,10 @@
 #include "TCPHandler.hpp"
 #include <logging.hpp>
 
-TCPHandler::TCPHandler(TCPHandler **conn_list_ptr, TYP *typ_handle, int s, int psize, int idx, bool needSocks5Handshake) : sfd(s) , conn_id(idx), packet_size(psize), needSocks5Handshake(needSocks5Handshake) , typroto(typ_handle) , conn_list(conn_list_ptr) {
+TCPHandler::TCPHandler(TCPHandler **conn_list_ptr, TYP *typ_handle, int s, int psize, int idx,
+                       bool needSocks5Handshake) : sfd(s) , conn_id(idx), packet_size(psize),
+                                                   needSocks5Handshake(needSocks5Handshake) ,
+                                                   typroto(typ_handle) , conn_list(conn_list_ptr) {
     
     is_writeable = true;
 initmtxlock:
@@ -65,6 +68,7 @@ void TCPHandler::read_cb(ev::io &watcher, int revents) {
     }else if(nread == 0){
         free(data);
         LOG(INFO) << "Closing connection " << watcher.fd;
+        /*没有数据驱动，就关闭掉连接*/
         this->shutdown();
     }else if(needSocks5Handshake && data[sp] == 0x05){
         uint8_t res[2];
@@ -168,7 +172,7 @@ void TCPHandler::add_queue(const uint8_t *data, int len){
     buf->data = (uint8_t *)mem;
     buf->wrote_len = 0;
     buf->len = len;
-    write_queue.push_back(buf);
+    write_queue.push_back(buf); /*是一个list*/
     pthread_mutex_unlock(&queue_lock);
 }
 

@@ -36,12 +36,12 @@ private:
     int Buffer_size;
     bool needSocks5Handshake;
     TYP *typroto;
-    TCPHandler **conn_list;
+    TCPHandler **conn_list; /*二维指针啊*/
     
     bool is_writeable;
-    pthread_spinlock_t writeable_lock;
+    pthread_spinlock_t writeable_lock; /*这种锁*/
     
-    std::list<Buffer *> write_queue;
+    std::list<Buffer *> write_queue; /*写入队列，里头都是buffer的指针呢*/
     pthread_mutex_t queue_lock;
     
     void write_cb(ev::io &watcher, int revents);
@@ -51,14 +51,15 @@ private:
         io_read.stop();
         io_write.stop();
         close(sfd);
+        /*清理写入队列啊*/
         for (std::list<Buffer *>::iterator it=write_queue.begin(); it != write_queue.end(); ++it){
             Buffer *b = *it;
-            free(b->data);
-            free(b);
+            free(b->data); /*释放掉数据指针*/
+            free(b); /*释放掉指针*/
         }
-        uint8_t *data = (uint8_t *)malloc(4);
+        uint8_t *data = (uint8_t *)malloc(4); /*4个字节，存放连接id*/
         memcpy(data, &conn_id, 4);
-        typroto->send(data, 4);
+        typroto->send(data, 4); /*先发送4个字节的链接id*/
         pthread_spin_destroy(&writeable_lock);
         pthread_mutex_destroy(&queue_lock);
     }

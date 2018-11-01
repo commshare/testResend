@@ -5,7 +5,7 @@
 #include "AutoLock.h"
 #include "HDS_Event.h"
 #include <stdio.h>
-//Ê¹ÓÃË«»º³å
+//ä½¿ç”¨åŒç¼“å†²
 template<typename T>
 class HDS_Blocking_Queue
 {

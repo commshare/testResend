@@ -64,7 +64,7 @@ typedef sockaddr_in SOCKADDR_IN;
 #define GET_STRUCT_FROM_CONTAININT_RECORD(address, type, field)\
 	((type*)((PCHAR)(address) - (PCHAR)(&((type*)0)->field)))
 
-//clock ��linux��clockֻ�Ǽ����˳�����ռ�õ�cpuʱ�䡣
+//clock 在linux下clock只是计算了程序所占用的cpu时间。
 #ifdef WIN32
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
 #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
@@ -180,6 +180,7 @@ enum IPADDR_TYPE
 	IPV6
 };
 
+/*检查有没冒号呢，判断是否ipv6*/
 static IPADDR_TYPE check_ip_addr_type(const char* ipaddr_)
 {
 	int length = strlen(ipaddr_);

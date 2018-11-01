@@ -16,7 +16,7 @@ CREATE_LOGGER;
 
 int main(int argc, char *argv[]){
     INIT_LOGGER;
-    string cfgpath = "/etc/tysocks/server";
+    string cfgpath = "/etc/tysocks/server"; /*配置文件路径*/
     if (argc > 1)
         cfgpath = argv[1];
 

@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #endif
-
+/*地址转ip，可以把accept到的地址转*/
 inline static std::string ip2str(const sockaddr *addr){
     std::string str;
     switch(addr->sa_family) {
@@ -43,7 +43,7 @@ inline static std::string ip2str(const sockaddr *addr){
     }
     return str;
 }
-
+/*这里还是区分了ipv6的*/
 inline static int str2ip(std::string ip, int port, sockaddr **addr){
     if(ip.find(":") != std::string::npos){
         int af = AF_INET6;
@@ -54,6 +54,7 @@ inline static int str2ip(std::string ip, int port, sockaddr **addr){
             free(sa);
             return -1;
         }
+        /*TODO 这里要记得转啊*/
         sa->sin6_port = htons(port);
         sa->sin6_family = af;
         *addr = (sockaddr *)sa;

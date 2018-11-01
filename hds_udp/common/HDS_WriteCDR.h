@@ -1,15 +1,15 @@
 #ifndef _HDS_WRITECDR_H_ 
 #define _HDS_WRITECDR_H_
-/*HDSµÄÊý¾ÝWriteCDR
+/*HDSçš„æ•°æ®WriteCDR
 */
-/*±¾HDSWriteCDR²»½øÐÐÄÚ´æ±ß½ç¼ì²é
-Ê¹ÓÃÊ±Çë×¢ÒâÄÚ´æÔ½½çÎÊÌâ*/
+/*æœ¬HDSWriteCDRä¸è¿›è¡Œå†…å­˜è¾¹ç•Œæ£€æŸ¥
+ä½¿ç”¨æ—¶è¯·æ³¨æ„å†…å­˜è¶Šç•Œé—®é¢˜*/
 
 
 /*
-×¢Òâ£¬±¾ÀàÖÐ£¬ÎÞÂÛÊÇÔÚ64Î»»¹ÊÇ32Î»µÄÏµÍ³ÖÐ£¬longºÍint¶¼½«ÊÓÎª4Byte
-ÏûÏ¢ÌåÖÐ²»»áÓÐ64Î»µÄÊý¾Ý
-ÓÉÓÚÖ»¿¼ÂÇx86¼Ü¹¹£¬ÊôÓÚÐ¡¶Ë×Ö½ÚÐò£¬Èç¹ûÓÐÆäËûÓ²¼þ¼Ü¹¹£¬ÇëÖØÐÂÊµÏÖ´ËÀà¡£
+æ³¨æ„ï¼Œæœ¬ç±»ä¸­ï¼Œæ— è®ºæ˜¯åœ¨64ä½è¿˜æ˜¯32ä½çš„ç³»ç»Ÿä¸­ï¼Œlongå’Œintéƒ½å°†è§†ä¸º4Byte
+æ¶ˆæ¯ä½“ä¸­ä¸ä¼šæœ‰64ä½çš„æ•°æ®
+ç”±äºŽåªè€ƒè™‘x86æž¶æž„ï¼Œå±žäºŽå°ç«¯å­—èŠ‚åºï¼Œå¦‚æžœæœ‰å…¶ä»–ç¡¬ä»¶æž¶æž„ï¼Œè¯·é‡æ–°å®žçŽ°æ­¤ç±»ã€‚
 */
 class HDS_WriteCDR
 {
